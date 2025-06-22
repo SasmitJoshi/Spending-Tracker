@@ -34,20 +34,49 @@ def clean_transactions(transactions):
 
     return cleaned_transactions
 
-# Splits transactions into months of the year
+# Splits transactions into months of the year as well as inflows and outflows
 def split_transactions():
-    print()
     transactions = get_all_transactions()
+    transactions = clean_transactions(transactions)
     # need to split transactions into monthly ones
+    monthly_transactions = {
+        "inflow": {},
+        "outflow": {}
+    }
+
+    for transaction in transactions:
+        transaction = transaction["attributes"]
+        amount = float(transaction["amount"]["value"])
+        date = transaction["createdAt"]
+
+        year = date.split("-")[0]
+        month = date.split("-")[1]
+
+        key = month + "-" + year
+
+        if amount < 0:
+            if key not in monthly_transactions["outflow"]:
+                monthly_transactions["outflow"][key] = [amount]
+            else:
+                monthly_transactions["outflow"][key].append(amount)
+        else:
+            if key not in monthly_transactions["inflow"]:
+                monthly_transactions["inflow"][key] = [amount]
+            else:
+                monthly_transactions["inflow"][key].append(amount)
+
+    return monthly_transactions
+
 
 # Running the logic
 if __name__ == "__main__":
-    transactions = get_all_transactions()
-    print(f"Fetched {len(transactions)} transactions")
-    cleaned_transactions = clean_transactions(transactions)
-    for transaction in cleaned_transactions:
-        transaction = transaction["attributes"]
-        desc = transaction["description"]
-        amt = transaction["amount"]["value"]
-        date = transaction["createdAt"]
-        print(f"{date} | {desc} | {amt}")
+    # transactions = get_all_transactions()
+    # print(f"Fetched {len(transactions)} transactions")
+    # cleaned_transactions = clean_transactions(transactions)
+    # for transaction in cleaned_transactions:
+    #     transaction = transaction["attributes"]
+    #     desc = transaction["description"]
+    #     amt = transaction["amount"]["value"]
+    #     date = transaction["createdAt"]
+    #     print(f"{date} | {desc} | {amt}")
+    print(split_transactions())
