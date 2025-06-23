@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 import os
 import requests
+import matplotlib.pyplot as plt
 
 
 load_dotenv()
@@ -88,9 +89,66 @@ def get_total_transactions():
 
     return total_transactions
 
+# Calculate the outflows by category for each month
+def get_monthly_category_totals():
+    transactions = get_all_transactions()
+    transactions = clean_transactions(transactions)
 
+    monthly_category_totals = {}
 
+    for transaction in transactions:
+        attributes = transaction["attributes"]
+        amount = round(float(attributes["amount"]["value"]), 2)
+
+        if amount >= 0:
+            continue
+
+        date = attributes["createdAt"]
+        year = date.split("-")[0]
+        month = date.split("-")[1]
+        key = month + "-" + year
+
+        category = transaction.get("relationships", {}).get("category", {}).get("data")
+        category_id = category.get("id") if category else "uncategorised"
+
+        if key not in monthly_category_totals:
+            monthly_category_totals[key] = {}
+
+        if category_id not in monthly_category_totals[key]:
+            monthly_category_totals[key][category_id] = amount
+        else:
+            monthly_category_totals[key][category_id] += amount
+
+        monthly_category_totals[key][category_id] = round(monthly_category_totals[key][category_id], 2)
+
+    return monthly_category_totals
+
+# Plot the monthly inflows and outflows and net spending
+def plot(total_transactions):
+    months = sorted(total_transactions.keys(), key=lambda m: (int(m.split("-")[1]), int(m.split("-")[0])))
+
+    inflows = [total_transactions[m].get("inflows", 0) for m in months]
+    outflows = [abs(total_transactions[m].get("outflows", 0)) for m in months]
+    net_savings = [i - o for i, o in zip(inflows, outflows)]
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(months, inflows, marker='o', label="Inflows")
+    plt.plot(months, outflows, marker='o', label="Outflows")
+    plt.plot(months, net_savings, marker='o', linestyle='--', label="Net Savings")
+
+    plt.title("Monthly Cash Flow Overview")
+    plt.xlabel("Month")
+    plt.ylabel("Amount ($AUD)")
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 # Running the logic
 if __name__ == "__main__":
-    print(get_total_transactions())
+    total_transactions = get_total_transactions()
+
+    plot(total_transactions)
+
+    print(get_monthly_category_totals())
