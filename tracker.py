@@ -35,10 +35,11 @@ def clean_transactions(transactions):
     return cleaned_transactions
 
 # Splits transactions into months of the year as well as inflows and outflows
+# Good for tracking individual expenses.
 def split_transactions():
     transactions = get_all_transactions()
     transactions = clean_transactions(transactions)
-    # need to split transactions into monthly ones
+
     monthly_transactions = {
         "inflow": {},
         "outflow": {}
@@ -46,7 +47,7 @@ def split_transactions():
 
     for transaction in transactions:
         transaction = transaction["attributes"]
-        amount = float(transaction["amount"]["value"])
+        amount = round(float(transaction["amount"]["value"]), 2)
         date = transaction["createdAt"]
 
         year = date.split("-")[0]
@@ -67,16 +68,29 @@ def split_transactions():
 
     return monthly_transactions
 
+# Calculate total inflows and outflows for each month
+# Good for tracking overall view
+def get_total_transactions():
+    transactions = split_transactions()
+    total_transactions = {}
+
+    for month in transactions.get("inflow", {}):
+        total = round(sum(transactions["inflow"][month]), 2)
+        if month not in total_transactions:
+            total_transactions[month] = {}
+        total_transactions[month]["inflows"] = total
+
+    for month in transactions.get("outflow", {}):
+        total = round(sum(transactions["outflow"][month]), 2)
+        if month not in total_transactions:
+            total_transactions[month] = {}
+        total_transactions[month]["outflows"] = total
+
+    return total_transactions
+
+
+
 
 # Running the logic
 if __name__ == "__main__":
-    # transactions = get_all_transactions()
-    # print(f"Fetched {len(transactions)} transactions")
-    # cleaned_transactions = clean_transactions(transactions)
-    # for transaction in cleaned_transactions:
-    #     transaction = transaction["attributes"]
-    #     desc = transaction["description"]
-    #     amt = transaction["amount"]["value"]
-    #     date = transaction["createdAt"]
-    #     print(f"{date} | {desc} | {amt}")
-    print(split_transactions())
+    print(get_total_transactions())
