@@ -10,6 +10,52 @@ GEMINI_TOKEN = os.getenv("GEMINI_API_KEY")
 header = {"Authorization": f"Bearer {UP_TOKEN}"}
 client = genai.Client(api_key=GEMINI_TOKEN)
 
+categories = f"""
+games-and-software
+booze
+events-and-gigs
+hobbies
+holiday-and-travel
+lottery-and-gambling
+pubs-and-bars
+restaurants-and-cafes
+takeaway
+tobacco-and-vaping
+tv-and-music
+
+children-and-family
+clothing-and-accessories
+education-and-student-loans
+fitness-and-wellbeing
+gifts-and-charity
+hair-and-beauty
+health-and-medical
+investments
+life-admin
+mobile-phone
+magazines-and-books
+technology
+
+groceries
+homeware-and-appliances
+internet
+maintenance-and-improvements
+pets
+rates-and-insurance
+rent-and-mortgage
+utilities
+
+rego-and-maintenance
+cycling
+fuel
+parking
+public-transport
+repayments
+taxis
+tolls
+"""
+
+
 # Returns all the transactions on my account
 def get_all_transactions():
     all_transactions = []
@@ -111,6 +157,11 @@ def get_monthly_category_totals():
         key = month + "-" + year
 
         category = transaction.get("relationships", {}).get("category", {}).get("data")
+
+        # Fix this so that given the name of the merchant, the AI determines
+        # which category the transaction should fall under
+
+        # need to create a large text map to feed the AI the different categories
         category_id = category.get("id") if category else "uncategorised"
 
         if key not in monthly_category_totals:
@@ -147,6 +198,27 @@ def plot(total_transactions):
     plt.tight_layout()
     plt.show()
 
+def summarise_outflow_transactions(monthly_data, question):
+    summary_text = "Here is my monthly spending breakdown:\n"
+    for month, categories in monthly_data.items():
+        summary_text += f"{month}:\n"
+        for category, amount in categories.items():
+            summary_text += f"  - {category}: ${abs(amount):.2f}\n"
+
+    prompt = f"""
+    You are a smart financial assistant. Based on the transaction data below, answer this question:
+    {question}
+    Here is the transaction data:
+    {summary_text}
+    """
+
+    response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=prompt
+    )
+
+    return response.text
+
 # Running the logic
 if __name__ == "__main__":
     # total_transactions = get_total_transactions()
@@ -155,11 +227,4 @@ if __name__ == "__main__":
 
     # print(get_monthly_category_totals())
 
-    # response = client.models.generate_content(
-    # model="gemini-2.5-flash",
-    # contents="Explain how AI works in a few words",
-    # )
-
-    # print(response.text)
-
-    print()
+    print(summarise_outflow_transactions(get_monthly_category_totals(), "How much did I spend in April 2025?"))
