@@ -15,7 +15,7 @@ games-and-software
 booze
 events-and-gigs
 hobbies
-holiday-and-travel
+holidays-and-travel
 lottery-and-gambling
 pubs-and-bars
 restaurants-and-cafes
@@ -33,7 +33,7 @@ health-and-medical
 investments
 life-admin
 mobile-phone
-magazines-and-books
+news-magazines-and-books
 technology
 
 groceries
@@ -51,7 +51,7 @@ fuel
 parking
 public-transport
 repayments
-taxis
+taxis-and-share-cars
 tolls
 """
 
@@ -227,4 +227,4 @@ if __name__ == "__main__":
 
     # print(get_monthly_category_totals())
 
-    print(summarise_outflow_transactions(get_monthly_category_totals(), "How much did I spend in April 2025?"))
+    print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
