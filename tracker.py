@@ -2,11 +2,13 @@ from dotenv import load_dotenv
 import os
 import requests
 import matplotlib.pyplot as plt
-
+from google import genai
 
 load_dotenv()
 UP_TOKEN = os.getenv("UP_API_KEY")
+GEMINI_TOKEN = os.getenv("GEMINI_API_KEY")
 header = {"Authorization": f"Bearer {UP_TOKEN}"}
+client = genai.Client(api_key=GEMINI_TOKEN)
 
 # Returns all the transactions on my account
 def get_all_transactions():
@@ -147,8 +149,17 @@ def plot(total_transactions):
 
 # Running the logic
 if __name__ == "__main__":
-    total_transactions = get_total_transactions()
+    # total_transactions = get_total_transactions()
 
-    plot(total_transactions)
+    # plot(total_transactions)
 
-    print(get_monthly_category_totals())
+    # print(get_monthly_category_totals())
+
+    # response = client.models.generate_content(
+    # model="gemini-2.5-flash",
+    # contents="Explain how AI works in a few words",
+    # )
+
+    # print(response.text)
+
+    print()
