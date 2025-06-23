@@ -137,6 +137,11 @@ def get_total_transactions():
 
     return total_transactions
 
+
+# Determine the category of a transaction given the merchant name for uncategorised transactions
+def determine_category(merchant_name):
+    print()
+
 # Calculate the outflows by category for each month
 def get_monthly_category_totals():
     transactions = get_all_transactions()
@@ -198,6 +203,7 @@ def plot(total_transactions):
     plt.tight_layout()
     plt.show()
 
+# Summarise the outflow transactions given the monthly data using Gemini
 def summarise_outflow_transactions(monthly_data, question):
     summary_text = "Here is my monthly spending breakdown:\n"
     for month, categories in monthly_data.items():
