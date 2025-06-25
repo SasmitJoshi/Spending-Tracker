@@ -140,7 +140,19 @@ def get_total_transactions():
 
 # Determine the category of a transaction given the merchant name for uncategorised transactions
 def determine_category(merchant_name):
-    print()
+    prompt = f"""
+    Given this list of categories:
+    {categories}
+
+    Which category does {merchant_name} fall under?
+    Just give the one word response for the category.
+    """
+    response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=prompt
+    )
+
+    return response.text
 
 # Calculate the outflows by category for each month
 def get_monthly_category_totals():
@@ -232,5 +244,6 @@ if __name__ == "__main__":
     # plot(total_transactions)
 
     # print(get_monthly_category_totals())
+    print(determine_category("Bunsik Parramatta"))
 
-    print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
+    # print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
