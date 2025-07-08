@@ -3,6 +3,8 @@ import os
 import requests
 import matplotlib.pyplot as plt
 from google import genai
+import time
+import random
 
 load_dotenv()
 UP_TOKEN = os.getenv("UP_API_KEY")
@@ -23,6 +25,7 @@ takeaway
 tobacco-and-vaping
 tv-and-music
 
+friends
 children-and-family
 clothing-and-accessories
 education-and-student-loans
@@ -54,6 +57,8 @@ repayments
 taxis-and-share-cars
 tolls
 """
+
+category_cache = {}
 
 
 # Returns all the transactions on my account
@@ -145,7 +150,11 @@ def determine_category(merchant_name):
     {categories}
 
     Which category does {merchant_name} fall under?
-    Just give the one word response for the category.
+    Just give the one word response for the category in lowercase and do not shorten any
+    of the categories.
+
+    If you're given a string that sounds like a person's name or does not fall under any category
+    just put it under the 'friends' category (except for 'Sasmit Joshi Stake' it should be 'investments').
     """
     response = client.models.generate_content(
     model="gemini-2.5-flash",
@@ -174,12 +183,24 @@ def get_monthly_category_totals():
         key = month + "-" + year
 
         category = transaction.get("relationships", {}).get("category", {}).get("data")
+        merchant_name = transaction.get("attributes", {}).get("description")
 
         # Fix this so that given the name of the merchant, the AI determines
         # which category the transaction should fall under
 
         # need to create a large text map to feed the AI the different categories
-        category_id = category.get("id") if category else "uncategorised"
+        if category:
+            category_id = category.get("id")
+        else:
+            if merchant_name in category_cache:
+                category_id = category_cache[merchant_name]
+            else:
+                category_id = determine_category(merchant_name)
+                category_cache[merchant_name] = category_id
+                # print(f"{merchant_name} has category: {category_id}")
+
+                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
+                time.sleep(3)
 
         if key not in monthly_category_totals:
             monthly_category_totals[key] = {}
@@ -244,6 +265,7 @@ if __name__ == "__main__":
     # plot(total_transactions)
 
     # print(get_monthly_category_totals())
-    print(determine_category("Bunsik Parramatta"))
+    # print(determine_category("Bunsik Parramatta"))
 
-    # print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
+    # print(get_monthly_category_totals())
+    print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
