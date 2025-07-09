@@ -4,7 +4,7 @@ import requests
 import matplotlib.pyplot as plt
 from google import genai
 import time
-import random
+import json
 
 load_dotenv()
 UP_TOKEN = os.getenv("UP_API_KEY")
@@ -58,8 +58,18 @@ taxis-and-share-cars
 tolls
 """
 
-category_cache = {}
+CACHE_FILE = "category_cache.json"
 
+# Load existing cache from file
+if os.path.exists(CACHE_FILE):
+    with open(CACHE_FILE, "r") as f:
+        category_cache = json.load(f)
+else:
+    category_cache = {}
+
+def save_cache():
+    with open(CACHE_FILE, "w") as f:
+        json.dump(category_cache, f)
 
 # Returns all the transactions on my account
 def get_all_transactions():
@@ -196,8 +206,10 @@ def get_monthly_category_totals():
                 category_id = category_cache[merchant_name]
             else:
                 category_id = determine_category(merchant_name)
+                print(f"{merchant_name} has category: {category_id}")
+
                 category_cache[merchant_name] = category_id
-                # print(f"{merchant_name} has category: {category_id}")
+                save_cache()
 
                 # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
                 time.sleep(3)
@@ -211,6 +223,7 @@ def get_monthly_category_totals():
             monthly_category_totals[key][category_id] += amount
 
         monthly_category_totals[key][category_id] = round(monthly_category_totals[key][category_id], 2)
+
 
     return monthly_category_totals
 
