@@ -279,6 +279,8 @@ if __name__ == "__main__":
 
     # print(get_monthly_category_totals())
     # print(determine_category("Bunsik Parramatta"))
+    
+    print()
 
     # print(get_monthly_category_totals())
-    print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
+    # print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
