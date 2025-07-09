@@ -173,6 +173,52 @@ def determine_category(merchant_name):
 
     return response.text
 
+# Calculate the daily outflows by category
+def get_daily_category_totals():
+    transactions = get_all_transactions()
+    transactions = clean_transactions(transactions)
+
+    daily_category_totals = {}
+
+    for transaction in transactions:
+        attributes = transaction["attributes"]
+        amount = round(float(attributes["amount"]["value"]), 2)
+
+        if amount >= 0:
+            continue
+
+        date = attributes["createdAt"]
+        date = date.split("T")[0]
+        category = transaction.get("relationships", {}).get("category", {}).get("data")
+        merchant_name = transaction.get("attributes", {}).get("description")
+
+        if category:
+            category_id = category.get("id")
+        else:
+            if merchant_name in category_cache:
+                category_id = category_cache[merchant_name]
+            else:
+                category_id = determine_category(merchant_name)
+                print(f"{merchant_name} has category: {category_id}")
+
+                category_cache[merchant_name] = category_id
+                save_cache()
+
+                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
+                time.sleep(3)
+
+        if date not in daily_category_totals:
+            daily_category_totals[date] = {}
+
+        if category_id not in daily_category_totals[date]:
+            daily_category_totals[date][category_id] = amount
+        else:
+            daily_category_totals[date][category_id] += amount
+
+        daily_category_totals[date][category_id] = round(daily_category_totals[date][category_id], 2)
+
+    return daily_category_totals
+
 # Calculate the outflows by category for each month
 def get_monthly_category_totals():
     transactions = get_all_transactions()
@@ -195,10 +241,6 @@ def get_monthly_category_totals():
         category = transaction.get("relationships", {}).get("category", {}).get("data")
         merchant_name = transaction.get("attributes", {}).get("description")
 
-        # Fix this so that given the name of the merchant, the AI determines
-        # which category the transaction should fall under
-
-        # need to create a large text map to feed the AI the different categories
         if category:
             category_id = category.get("id")
         else:
@@ -279,8 +321,9 @@ if __name__ == "__main__":
 
     # print(get_monthly_category_totals())
     # print(determine_category("Bunsik Parramatta"))
-    
+
     print()
+    print(get_daily_category_totals())
 
     # print(get_monthly_category_totals())
     # print(summarise_outflow_transactions(get_monthly_category_totals(), "Based on my transactions in 2025, how can i optimise my outflows and savings for the rest of the year?"))
