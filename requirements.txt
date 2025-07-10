@@ -3,3 +3,4 @@ dotenv
 matplotlib
 google-genai
 streamlit
+flask

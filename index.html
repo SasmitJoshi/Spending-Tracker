@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Personal Finance Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>How can I help you today?</h1>
+    <form method="POST">
+        <input type="text", name="user_input", placeholder="Ask me anything about your spending. For example, how much did I spend last month?" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if ai_output %}
+    <div>
+        <h2>AI Response:</h2>
+        <p>{{ ai_output }}</p>
+    </div>
+    {% endif %}
+</body>
+</html>
