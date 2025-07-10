@@ -58,21 +58,39 @@ taxis-and-share-cars
 tolls
 """
 
-CACHE_FILE = "category_cache.json"
+TRANSACTIONS_FILE = "transactions_cache.json"
+CATEGORY_FILE = "category_cache.json"
 
-# Load existing cache from file
-if os.path.exists(CACHE_FILE):
-    with open(CACHE_FILE, "r") as f:
-        category_cache = json.load(f)
-else:
-    category_cache = {}
+def load_json_file(filename, default):
+    if os.path.exists(filename):
+        try:
+            with open(filename, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Warning: {filename} is corrupted or empty.")
+    return default
 
-def save_cache():
-    with open(CACHE_FILE, "w") as f:
-        json.dump(category_cache, f)
+def save_json_file(filename, data):
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=2)
 
-# Returns all the transactions on my account
-def get_all_transactions():
+category_cache = load_json_file(CATEGORY_FILE, {})
+transactions_cache = load_json_file(TRANSACTIONS_FILE, [])
+
+def save_transactions_cache(transactions):
+    save_json_file(TRANSACTIONS_FILE, transactions)
+
+def save_category_cache():
+    save_json_file(CATEGORY_FILE, category_cache)
+
+# Retrieves all the transactions that have occured with this UP
+# account
+def get_all_transactions(force_refresh=False):
+    global transactions_cache
+    if not force_refresh and transactions_cache:
+        return transactions_cache
+
+    print("Fetching transactions from UP API...")
     all_transactions = []
     url = "https://api.up.com.au/api/v1/transactions"
 
@@ -80,11 +98,11 @@ def get_all_transactions():
         res = requests.get(url, headers=header)
         res.raise_for_status()
         json_data = res.json()
-
         all_transactions.extend(json_data.get("data", []))
-
         url = json_data.get("links", {}).get("next")
 
+    transactions_cache = all_transactions
+    save_transactions_cache(all_transactions)
     return all_transactions
 
 # Cleans the transactions, removing any transactions that are transfers to and from
@@ -202,7 +220,7 @@ def get_daily_category_totals():
                 print(f"{merchant_name} has category: {category_id}")
 
                 category_cache[merchant_name] = category_id
-                save_cache()
+                save_category_cache()
 
                 # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
                 time.sleep(3)
@@ -251,7 +269,7 @@ def get_monthly_category_totals():
                 print(f"{merchant_name} has category: {category_id}")
 
                 category_cache[merchant_name] = category_id
-                save_cache()
+                save_category_cache()
 
                 # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
                 time.sleep(3)

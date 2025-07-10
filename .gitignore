@@ -1,3 +1,4 @@
 .env
 __pycache__/
 category_cache.json
+transactions_cache.json
