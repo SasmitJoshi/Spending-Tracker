@@ -4,20 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Personal Finance Assistant</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <h1>AI Personal Finance Assistant</h1>
     <h1>How can I help you today?</h1>
     <form method="POST">
-        <input type="text", name="user_input", placeholder="Ask me anything about your spending. For example, how much did I spend last month?" required>
-        <button type="submit">Submit</button>
+        <input class="input" type="text" name="user_input" placeholder="Ask me anything about your spending!" required>
+        <button class="button" type="submit">Submit</button>
     </form>
 
     {% if ai_output %}
-    <div>
+    <div class="output-box">
         <h2>AI Response:</h2>
-        <p>{{ ai_output }}</p>
+        <div>{{ ai_output|safe }}</div>
     </div>
     {% endif %}
+
+
 </body>
 </html>
