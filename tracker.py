@@ -287,27 +287,40 @@ def get_monthly_category_totals():
 
     return monthly_category_totals
 
-# Plot the monthly inflows and outflows and net spending
-def plot(total_transactions):
-    months = sorted(total_transactions.keys(), key=lambda m: (int(m.split("-")[1]), int(m.split("-")[0])))
+def get_yearly_category_totals():
+    transactions = get_all_transactions()
+    transactions = clean_transactions(transactions)
 
-    inflows = [total_transactions[m].get("inflows", 0) for m in months]
-    outflows = [abs(total_transactions[m].get("outflows", 0)) for m in months]
-    net_savings = [i - o for i, o in zip(inflows, outflows)]
+    yearly_category_totals = {}
+    for transaction in transactions:
+        attributes = transaction["attributes"]
+        amount = round(float(attributes["amount"]["value"]), 2)
 
-    plt.figure(figsize=(12, 6))
-    plt.plot(months, inflows, marker='o', label="Inflows")
-    plt.plot(months, outflows, marker='o', label="Outflows")
-    plt.plot(months, net_savings, marker='o', linestyle='--', label="Net Savings")
+        if amount >= 0:
+            continue
 
-    plt.title("Monthly Cash Flow Overview")
-    plt.xlabel("Month")
-    plt.ylabel("Amount ($AUD)")
-    plt.xticks(rotation=45)
-    plt.grid(True)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+        year = attributes["createdAt"].split("-")[0]
+        category = transaction.get("relationships", {}).get("category", {}).get("data")
+        merchant_name = attributes.get("description")
+
+        if category:
+            category_id = category.get("id")
+        else:
+            if merchant_name in category_cache:
+                category_id = category_cache[merchant_name]
+            else:
+                category_id = determine_category(merchant_name)
+                category_cache[merchant_name] = category_id
+                save_category_cache()
+                time.sleep(3)
+
+        if year not in yearly_category_totals:
+            yearly_category_totals[year] = {}
+
+        yearly_category_totals[year][category_id] = yearly_category_totals[year].get(category_id, 0) + amount
+        yearly_category_totals[year][category_id] = round(yearly_category_totals[year][category_id], 2)
+
+    return yearly_category_totals
 
 # Summarise the outflow transactions given the monthly data using Gemini
 def summarise_outflow_transactions(monthly_data, question):

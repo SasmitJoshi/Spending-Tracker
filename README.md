@@ -1,6 +1,6 @@
 # 💸 Spending-Tracker
 
-Recently, I noticed I’ve been spending a bit too much money. While the UP Bank app already breaks down my spending, I wanted to see if I could build something **even better myself** — and learn more about data processing, visualisation, and AI along the way.
+Recently, I noticed I’ve been spending a bit too much money. While the UP Bank app already breaks down my spending, I wanted to see if I could build something **even better myself** and learn more about data processing, visualisation, and AI along the way.
 
 So I created this **personal spending tracker** that:
 

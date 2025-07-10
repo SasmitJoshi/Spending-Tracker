@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from tracker import summarise_outflow_transactions, get_monthly_category_totals
+from tracker import get_daily_category_totals, get_yearly_category_totals, summarise_outflow_transactions, get_monthly_category_totals, get_total_transactions, plot
 import markdown
 
 app = Flask(__name__)
@@ -15,9 +15,18 @@ def home():
 
     return render_template('index.html', ai_output=ai_output)
 
-# @app.route('/visualisations', methods=['GET', 'POST'])
-# def graphs():
-#     return
+@app.route('/dashboard')
+def dashboard():
+    monthly = get_monthly_category_totals()
+    daily = get_daily_category_totals()
+    yearly = get_yearly_category_totals()
+    return render_template(
+        "dashboard.html",
+        monthly=monthly,
+        daily=daily,
+        yearly=yearly
+    )
+
 
 if __name__ == '__main__':
     app.run(debug=True)

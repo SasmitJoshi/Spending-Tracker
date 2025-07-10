@@ -7,7 +7,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Personal Finance Assistant</h1>
+    <nav id="desktop-nav">
+        <div>
+            <ul class="nav-links">
+                <li><a href="/">AI Assistant</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+            </ul>
+        </div>
+    </nav>
+    <h1>AI Personal Finance Assistant</h1>
     <h1>How can I help you today?</h1>
     <form method="POST">
         <input class="input" type="text" name="user_input" placeholder="Ask me anything about your spending!" required>
