@@ -1,7 +1,47 @@
-# Spending-Tracker
-Recently, I have been spending too much money. So I wanted something to help me understand how much money I am spending each month
-as well as how much money is coming into my acount each month.
+# 💸 Spending-Tracker
 
-The UP bank app already has something that calculates all of this for me but I wanted to see if I could make it better.
+Recently, I noticed I’ve been spending a bit too much money. While the UP Bank app already breaks down my spending, I wanted to see if I could build something **even better myself** — and learn more about data processing, visualisation, and AI along the way.
 
-Also it would look pretty cool as a personal project.
+So I created this **personal spending tracker** that:
+
+- Fetches transactions from the UP Bank API
+- Cleans and categorises them (using Gemini AI for uncategorised merchants)
+- Tracks inflows vs outflows over time
+- Breaks down spending by category and by month
+- Visualises cash flow trends
+- Summarises spending habits using an AI assistant
+
+It’s a fun way to keep myself accountable, and a pretty cool personal project to showcase Python + API integration + AI all in one.
+
+---
+
+## ⚙️ Features
+
+✅ Fetches all transactions from the UP Bank API (with local caching)  
+✅ Removes internal transfers so it only tracks real spending  
+✅ Automatically categorises transactions — including unknown merchants via Gemini AI  
+✅ Stores transaction & category data locally to avoid repeated API calls  
+✅ Groups spending by day or month, and by category  
+✅ Plots monthly inflows, outflows, and net cash flow using `matplotlib`  
+✅ Generates AI-based summaries of how to optimise spending
+
+---
+
+## 🚀 Tech Stack
+
+- **Python** — core language
+- **UP Bank API** — to fetch real transaction data
+- **Gemini AI (Google Generative AI)** — for merchant categorisation & spending insights
+- **Matplotlib** — for visualising trends
+- **JSON** — local caching of transactions and category mappings
+
+---
+
+## 📝 Why I built this
+
+- To better understand where my money is going each month.
+- To practice working with APIs, data cleaning, and time series analysis.
+- To build something more tailored and smarter than what the bank app provides.
+- And yeah, it looks pretty cool on my portfolio. 😄
+
+---
