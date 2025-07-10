@@ -11,6 +11,7 @@
             <ul class="nav-links">
                 <li><a href="/">AI Assistant</a></li>
                 <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/transactions">Transactions</a></li>
             </ul>
         </div>
     </nav>
@@ -27,7 +28,7 @@
         <canvas id="dailyChart"></canvas>
     </div>
 
-    <div id="weeklyContainer" class="chart-container">
+    <div id="weeklyContainer" class="chart-container" style="display:none;">
         <h1>Weekly Spending</h1>
         <canvas id="weeklyChart"></canvas>
     </div>
@@ -46,9 +47,10 @@
     const monthlyData = {{ monthly|tojson }};
     const dailyData = {{ daily|tojson }};
     const yearlyData = {{ yearly|tojson }};
+    const weeklyData = {{ weekly|tojson }};
 
     function showChart(chart) {
-        ['daily', 'monthly', 'yearly'].forEach(c => {
+        ['daily', 'monthly', 'yearly', 'weekly'].forEach(c => {
             document.getElementById(c + 'Container').style.display = (c === chart) ? 'block' : 'none';
         });
     }
@@ -113,10 +115,10 @@
 
     // Initialize charts
     createStackedBarChart(document.getElementById('dailyChart').getContext('2d'), dailyData);
+    createStackedBarChart(document.getElementById('weeklyChart').getContext('2d'), weeklyData);
     createStackedBarChart(document.getElementById('monthlyChart').getContext('2d'), monthlyData);
     createStackedBarChart(document.getElementById('yearlyChart').getContext('2d'), yearlyData);
 
-    // Show daily chart by default
     showChart('daily');
 </script>
 </body>

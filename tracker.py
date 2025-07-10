@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from google import genai
 import time
 import json
+from datetime import datetime
 
 load_dotenv()
 UP_TOKEN = os.getenv("UP_API_KEY")
@@ -237,6 +238,55 @@ def get_daily_category_totals():
 
     return daily_category_totals
 
+def get_weekly_category_totals():
+    transactions = get_all_transactions()
+    transactions = clean_transactions(transactions)
+
+    weekly_category_totals = {}
+
+    for transaction in transactions:
+        attributes = transaction["attributes"]
+        amount = round(float(attributes["amount"]["value"]), 2)
+
+        if amount >= 0:
+            continue
+
+        date = attributes["createdAt"]
+        date = datetime.fromisoformat(date)
+
+        iso_year, iso_week, _ = date.isocalendar()
+        week_key = f"{iso_year}-W{iso_week:02}"
+
+        category = transaction.get("relationships", {}).get("category", {}).get("data")
+        merchant_name = transaction.get("attributes", {}).get("description")
+
+        if category:
+            category_id = category.get("id")
+        else:
+            if merchant_name in category_cache:
+                category_id = category_cache[merchant_name]
+            else:
+                category_id = determine_category(merchant_name)
+                print(f"{merchant_name} has category: {category_id}")
+
+                category_cache[merchant_name] = category_id
+                save_category_cache()
+
+                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
+                time.sleep(3)
+
+        if week_key not in weekly_category_totals:
+            weekly_category_totals[week_key] = {}
+
+        if category_id not in weekly_category_totals[week_key]:
+            weekly_category_totals[week_key][category_id] = amount
+        else:
+            weekly_category_totals[week_key][category_id] += amount
+
+        weekly_category_totals[week_key][category_id] = round(weekly_category_totals[week_key][category_id], 2)
+
+    return weekly_category_totals
+
 # Calculate the outflows by category for each month
 def get_monthly_category_totals():
     transactions = get_all_transactions()
@@ -284,7 +334,6 @@ def get_monthly_category_totals():
 
         monthly_category_totals[key][category_id] = round(monthly_category_totals[key][category_id], 2)
 
-
     return monthly_category_totals
 
 def get_yearly_category_totals():
@@ -322,6 +371,7 @@ def get_yearly_category_totals():
 
     return yearly_category_totals
 
+# FIXME: Need to fix the data so that it can return a wider range of responses (currently limited to monthly)
 # Summarise the outflow transactions given the monthly data using Gemini
 def summarise_outflow_transactions(monthly_data, question):
     summary_text = "Here is my monthly spending breakdown:\n"
