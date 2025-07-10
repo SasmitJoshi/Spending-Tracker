@@ -54,30 +54,27 @@ h1 {
     transform: translateY(-2px);
 }
 
-/* .output-box {
-    margin-top: 20px;
-    padding: 15px 20px;
-    border: 2px solid #98d9ef;
-    border-radius: 10px;
-    background-color: #e8f4fc;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    width: 100%;
-    font-size: 1.1rem;
-    color: #333;
-    white-space: pre-wrap;
-} */
-
-
 .output-box {
-    white-space: pre-wrap;
     font-family: 'Poppins', sans-serif;
-    line-height: 1.5;
+    line-height: 1.7;
     color: #333;
     background-color: #e8f4fc;
-    padding: 15px;
-    border-radius: 8px;
+    padding: 25px;
+    border-radius: 20px;
     border: 2px solid #98d9ef;
-    max-width: 700px;
-    margin-top: 20px;
+    max-width: 1000px;
+    width: 100%;
+    margin-top: 25px;
+    box-sizing: border-box;
+    word-wrap: break-word;
+}
+
+.output-box ol,
+.output-box ul {
+    padding-left: 35px;  /* more indent for list */
+    margin-bottom: 15px;
+}
+
+.output-box li {
+    margin-bottom: 8px;
 }
