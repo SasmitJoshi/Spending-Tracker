@@ -84,11 +84,31 @@ def save_transactions_cache(transactions):
 def save_category_cache():
     save_json_file(CATEGORY_FILE, category_cache)
 
+# Determine the category of a transaction given the merchant name for uncategorised transactions
+def determine_category(merchant_name):
+    prompt = f"""
+    Given this list of categories:
+    {categories}
+
+    Which category does {merchant_name} fall under?
+    Just give the one word response for the category in lowercase and do not shorten any
+    of the categories.
+
+    If you're given a string that sounds like a person's name or does not fall under any category
+    just put it under the 'friends' category (except for 'Sasmit Joshi Stake' it should be 'investments').
+    """
+    response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents=prompt
+    )
+
+    return response.text
+
 # Retrieves all the transactions that have occured with this UP
 # account
-def get_all_transactions(force_refresh=False):
+def get_all_transactions():
     global transactions_cache
-    if not force_refresh and transactions_cache:
+    if transactions_cache:
         return transactions_cache
 
     print("Fetching transactions from UP API...")
@@ -99,7 +119,35 @@ def get_all_transactions(force_refresh=False):
         res = requests.get(url, headers=header)
         res.raise_for_status()
         json_data = res.json()
-        all_transactions.extend(json_data.get("data", []))
+        for t in json_data.get("data", []):
+            attributes = t.get("attributes", {})
+            merchant_name = attributes.get("description")
+            amount = round(float(attributes.get("amount", {}).get("value", 0)), 2)
+            date = attributes.get("createdAt")
+
+            category_data = t.get("relationships", {}).get("category", {}).get("data")
+            category = category_data.get("id") if category_data else None
+
+            if not category:
+                if merchant_name in category_cache:
+                    category = category_cache[merchant_name]
+                else:
+                    category = determine_category(merchant_name)
+                    print(f"{merchant_name} has category: {category}")
+
+                    category_cache[merchant_name] = category
+                    save_category_cache()
+
+                    # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
+                    time.sleep(3)
+
+            all_transactions.append({
+                "merchant_name": merchant_name,
+                "category": category,
+                "amount": amount,
+                "date": date
+            })
+
         url = json_data.get("links", {}).get("next")
 
     transactions_cache = all_transactions
@@ -111,8 +159,8 @@ def get_all_transactions(force_refresh=False):
 def clean_transactions(transactions):
     cleaned_transactions = []
     for transaction in transactions:
-        transfer_account = transaction["relationships"].get("transferAccount", {}).get("data")
-        if not transfer_account:
+        merchant_name = transaction["merchant_name"]
+        if not (merchant_name.startswith("Transfer to") or merchant_name.startswith("Transfer from")):
             cleaned_transactions.append(transaction)
 
     return cleaned_transactions
@@ -129,9 +177,8 @@ def split_transactions():
     }
 
     for transaction in transactions:
-        transaction = transaction["attributes"]
-        amount = round(float(transaction["amount"]["value"]), 2)
-        date = transaction["createdAt"]
+        amount = round(float(transaction["amount"]), 2)
+        date = transaction["date"]
 
         year = date.split("-")[0]
         month = date.split("-")[1]
@@ -171,27 +218,6 @@ def get_total_transactions():
 
     return total_transactions
 
-
-# Determine the category of a transaction given the merchant name for uncategorised transactions
-def determine_category(merchant_name):
-    prompt = f"""
-    Given this list of categories:
-    {categories}
-
-    Which category does {merchant_name} fall under?
-    Just give the one word response for the category in lowercase and do not shorten any
-    of the categories.
-
-    If you're given a string that sounds like a person's name or does not fall under any category
-    just put it under the 'friends' category (except for 'Sasmit Joshi Stake' it should be 'investments').
-    """
-    response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=prompt
-    )
-
-    return response.text
-
 # Calculate the daily outflows by category
 def get_daily_category_totals():
     transactions = get_all_transactions()
@@ -200,41 +226,24 @@ def get_daily_category_totals():
     daily_category_totals = {}
 
     for transaction in transactions:
-        attributes = transaction["attributes"]
-        amount = round(float(attributes["amount"]["value"]), 2)
+        amount = round(float(transaction["amount"]), 2)
 
         if amount >= 0:
             continue
 
-        date = attributes["createdAt"]
+        date = transaction["date"]
         date = date.split("T")[0]
-        category = transaction.get("relationships", {}).get("category", {}).get("data")
-        merchant_name = transaction.get("attributes", {}).get("description")
-
-        if category:
-            category_id = category.get("id")
-        else:
-            if merchant_name in category_cache:
-                category_id = category_cache[merchant_name]
-            else:
-                category_id = determine_category(merchant_name)
-                print(f"{merchant_name} has category: {category_id}")
-
-                category_cache[merchant_name] = category_id
-                save_category_cache()
-
-                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
-                time.sleep(3)
+        category = transaction["category"]
 
         if date not in daily_category_totals:
             daily_category_totals[date] = {}
 
-        if category_id not in daily_category_totals[date]:
-            daily_category_totals[date][category_id] = amount
+        if category not in daily_category_totals[date]:
+            daily_category_totals[date][category] = amount
         else:
-            daily_category_totals[date][category_id] += amount
+            daily_category_totals[date][category] += amount
 
-        daily_category_totals[date][category_id] = round(daily_category_totals[date][category_id], 2)
+        daily_category_totals[date][category] = round(daily_category_totals[date][category], 2)
 
     return daily_category_totals
 
@@ -245,45 +254,28 @@ def get_weekly_category_totals():
     weekly_category_totals = {}
 
     for transaction in transactions:
-        attributes = transaction["attributes"]
-        amount = round(float(attributes["amount"]["value"]), 2)
+        amount = round(float(transaction["amount"]), 2)
 
         if amount >= 0:
             continue
 
-        date = attributes["createdAt"]
+        date = transaction["date"]
         date = datetime.fromisoformat(date)
 
         iso_year, iso_week, _ = date.isocalendar()
         week_key = f"{iso_year}-W{iso_week:02}"
 
-        category = transaction.get("relationships", {}).get("category", {}).get("data")
-        merchant_name = transaction.get("attributes", {}).get("description")
-
-        if category:
-            category_id = category.get("id")
-        else:
-            if merchant_name in category_cache:
-                category_id = category_cache[merchant_name]
-            else:
-                category_id = determine_category(merchant_name)
-                print(f"{merchant_name} has category: {category_id}")
-
-                category_cache[merchant_name] = category_id
-                save_category_cache()
-
-                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
-                time.sleep(3)
+        category = transaction["category"]
 
         if week_key not in weekly_category_totals:
             weekly_category_totals[week_key] = {}
 
-        if category_id not in weekly_category_totals[week_key]:
-            weekly_category_totals[week_key][category_id] = amount
+        if category not in weekly_category_totals[week_key]:
+            weekly_category_totals[week_key][category] = amount
         else:
-            weekly_category_totals[week_key][category_id] += amount
+            weekly_category_totals[week_key][category] += amount
 
-        weekly_category_totals[week_key][category_id] = round(weekly_category_totals[week_key][category_id], 2)
+        weekly_category_totals[week_key][category] = round(weekly_category_totals[week_key][category], 2)
 
     return weekly_category_totals
 
@@ -295,44 +287,27 @@ def get_monthly_category_totals():
     monthly_category_totals = {}
 
     for transaction in transactions:
-        attributes = transaction["attributes"]
-        amount = round(float(attributes["amount"]["value"]), 2)
+        amount = round(float(transaction["amount"]), 2)
 
         if amount >= 0:
             continue
 
-        date = attributes["createdAt"]
+        date = transaction["date"]
         year = date.split("-")[0]
         month = date.split("-")[1]
         key = month + "-" + year
 
-        category = transaction.get("relationships", {}).get("category", {}).get("data")
-        merchant_name = transaction.get("attributes", {}).get("description")
-
-        if category:
-            category_id = category.get("id")
-        else:
-            if merchant_name in category_cache:
-                category_id = category_cache[merchant_name]
-            else:
-                category_id = determine_category(merchant_name)
-                print(f"{merchant_name} has category: {category_id}")
-
-                category_cache[merchant_name] = category_id
-                save_category_cache()
-
-                # Sleep 3 or 4 seconds to avoid the going out request count limit (15 per min)
-                time.sleep(3)
+        category = transaction["category"]
 
         if key not in monthly_category_totals:
             monthly_category_totals[key] = {}
 
-        if category_id not in monthly_category_totals[key]:
-            monthly_category_totals[key][category_id] = amount
+        if category not in monthly_category_totals[key]:
+            monthly_category_totals[key][category] = amount
         else:
-            monthly_category_totals[key][category_id] += amount
+            monthly_category_totals[key][category] += amount
 
-        monthly_category_totals[key][category_id] = round(monthly_category_totals[key][category_id], 2)
+        monthly_category_totals[key][category] = round(monthly_category_totals[key][category], 2)
 
     return monthly_category_totals
 
@@ -342,43 +317,29 @@ def get_yearly_category_totals():
 
     yearly_category_totals = {}
     for transaction in transactions:
-        attributes = transaction["attributes"]
-        amount = round(float(attributes["amount"]["value"]), 2)
+        amount = round(float(transaction["amount"]), 2)
 
         if amount >= 0:
             continue
 
-        year = attributes["createdAt"].split("-")[0]
-        category = transaction.get("relationships", {}).get("category", {}).get("data")
-        merchant_name = attributes.get("description")
-
-        if category:
-            category_id = category.get("id")
-        else:
-            if merchant_name in category_cache:
-                category_id = category_cache[merchant_name]
-            else:
-                category_id = determine_category(merchant_name)
-                category_cache[merchant_name] = category_id
-                save_category_cache()
-                time.sleep(3)
+        year = transaction["date"].split("-")[0]
+        category = transaction["category"]
 
         if year not in yearly_category_totals:
             yearly_category_totals[year] = {}
 
-        yearly_category_totals[year][category_id] = yearly_category_totals[year].get(category_id, 0) + amount
-        yearly_category_totals[year][category_id] = round(yearly_category_totals[year][category_id], 2)
+        yearly_category_totals[year][category] = yearly_category_totals[year].get(category, 0) + amount
+        yearly_category_totals[year][category] = round(yearly_category_totals[year][category], 2)
 
     return yearly_category_totals
 
 # FIXME: Need to fix the data so that it can return a wider range of responses (currently limited to monthly)
 # Summarise the outflow transactions given the monthly data using Gemini
-def summarise_outflow_transactions(monthly_data, question):
-    summary_text = "Here is my monthly spending breakdown:\n"
-    for month, categories in monthly_data.items():
-        summary_text += f"{month}:\n"
-        for category, amount in categories.items():
-            summary_text += f"  - {category}: ${abs(amount):.2f}\n"
+def summarise_outflow_transactions(question):
+    data = get_all_transactions()
+    summary_text = ""
+    for transaction in data:
+        summary_text += f"- {transaction['date'][:10]} | {transaction['merchant_name']} | {transaction['category']} | ${transaction['amount']:.2f}\n"
 
     prompt = f"""
     You are a smart financial assistant. Based on the transaction data below, answer this question:
@@ -396,4 +357,7 @@ def summarise_outflow_transactions(monthly_data, question):
 
 # Running the logic
 if __name__ == "__main__":
-    print()
+    # print(get_all_transactions())
+    # print(clean_transactions(get_all_transactions()))
+    # print(split_transactions())
+    print(summarise_outflow_transactions("how much did i spend in march 2025?"))
