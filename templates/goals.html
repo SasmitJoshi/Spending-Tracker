@@ -6,6 +6,47 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>$ Goals</title>
 </head>
+<script>
+    function openGoalModal() {
+        document.getElementById("goalModal").style.display = "block";
+    }
+
+    function closeGoalModal() {
+        document.getElementById("goalModal").style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        let modal = document.getElementById("goalModal");
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+    const goalForm = document.getElementById("goalForm");
+    const outputBox = document.querySelector(".output-box");
+
+    goalForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        let name = this.goalName.value;
+        let amount = this.goalAmount.value;
+
+        let goalBox = document.createElement("div");
+        goalBox.className = "goal-box";
+        goalBox.innerHTML = `
+            <h3>${name}</h3>
+            <p>Target: $${amount}</p>
+        `;
+
+        outputBox.appendChild(goalBox);
+
+        closeGoalModal();
+        this.reset();
+    });
+});
+</script>
+
+
 <body>
     <nav id="desktop-nav">
         <div>
@@ -18,10 +59,9 @@
         </div>
     </nav>
     <h1>💸 Savings Goals</h1>
+    <h2>Create a savings goal by clicking on the + icon on the bottom right!</h2>
 
-    <button class="button">Create a Savings Goal</button>
     <div class="output-box">
-        <div>bello</div>
     </div>
 
     <div class="powered-by">
@@ -30,5 +70,19 @@
             <img src="/static/up_logo.png" alt="UP Bank" class="up-logo">
         </a>
     </div>
+
+    <button class="fab" onclick="openGoalModal()">+</button>
+
+    <div id="goalModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeGoalModal()">&times;</span>
+        <h2>Create Savings Goal</h2>
+        <form id="goalForm">
+            <input class="modal-input" type="text" placeholder="Goal Name" name="goalName" required>
+            <input class="modal-input" type="number" placeholder="Target $" name="goalAmount" required>
+            <button class="button" type="submit">Create Goal</button>
+        </form>
+    </div>
+</div>
 </body>
 </html>
