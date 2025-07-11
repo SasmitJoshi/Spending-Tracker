@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for
-from tracker import get_daily_category_totals, get_weekly_category_totals, get_yearly_category_totals, summarise_outflow_transactions, get_monthly_category_totals
+from tracker import clean_transactions, get_all_transactions, get_daily_category_totals, get_weekly_category_totals, get_yearly_category_totals, summarise_outflow_transactions, get_monthly_category_totals
 import markdown
 
 app = Flask(__name__)
@@ -10,7 +10,7 @@ ai_output_store = {}
 def home():
     if request.method == 'POST':
         user_input = request.form.get('user_input')
-        raw_output = summarise_outflow_transactions(get_monthly_category_totals(), user_input)
+        raw_output = summarise_outflow_transactions(user_input)
         output_id = "current"
         ai_output_store[output_id] = markdown.markdown(raw_output)
         return redirect(url_for('home'))
@@ -34,8 +34,8 @@ def dashboard():
 
 @app.route('/transactions')
 def transactions():
-
-    return render_template('transactions.html')
+    transactions = clean_transactions(get_all_transactions())
+    return render_template('transactions.html', transactions=transactions)
 
 if __name__ == '__main__':
     app.run(debug=True)

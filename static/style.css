@@ -141,3 +141,50 @@ canvas {
     max-height: 100%;
     max-width: 100%;
 }
+
+
+/* Transactions */
+.transaction-box {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    margin: 20px;
+    background-color: white;
+}
+
+thead {
+    display: table-header-group;
+}
+
+th {
+    text-align: left;
+    padding: 12px;
+    background-color: #f0f8ff;
+    color: #2c3e50;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+td, th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.negative {
+    color: red;
+}
+
+.positive {
+    color: green;
+}

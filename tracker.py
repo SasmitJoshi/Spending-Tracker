@@ -337,6 +337,7 @@ def get_yearly_category_totals():
 # Summarise the outflow transactions given the monthly data using Gemini
 def summarise_outflow_transactions(question):
     data = get_all_transactions()
+    data = clean_transactions(data)
     summary_text = ""
     for transaction in data:
         summary_text += f"- {transaction['date'][:10]} | {transaction['merchant_name']} | {transaction['category']} | ${transaction['amount']:.2f}\n"
