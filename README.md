@@ -22,7 +22,6 @@ It’s a fun way to keep myself accountable, and a pretty cool personal project 
 ✅ Automatically categorises transactions — including unknown merchants via Gemini AI  
 ✅ Stores transaction & category data locally to avoid repeated API calls  
 ✅ Groups spending by day or month, and by category  
-✅ Plots monthly inflows, outflows, and net cash flow using `matplotlib`  
 ✅ Generates AI-based summaries of how to optimise spending
 
 ---
@@ -32,7 +31,6 @@ It’s a fun way to keep myself accountable, and a pretty cool personal project 
 - **Python** — core language
 - **UP Bank API** — to fetch real transaction data
 - **Gemini AI (Google Generative AI)** — for merchant categorisation & spending insights
-- **Matplotlib** — for visualising trends
 - **JSON** — local caching of transactions and category mappings
 
 ---
@@ -41,7 +39,5 @@ It’s a fun way to keep myself accountable, and a pretty cool personal project 
 
 - To better understand where my money is going each month.
 - To practice working with APIs, data cleaning, and time series analysis.
-- To build something more tailored and smarter than what the bank app provides.
-- And yeah, it looks pretty cool on my portfolio. 😄
 
 ---
