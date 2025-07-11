@@ -37,5 +37,9 @@ def transactions():
     transactions = clean_transactions(get_all_transactions())
     return render_template('transactions.html', transactions=transactions)
 
+@app.route('/goals')
+def goals():
+    return render_template('goals.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Personal Finance Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>$ Goals</title>
 </head>
 <body>
     <nav id="desktop-nav">
@@ -17,19 +17,10 @@
             </ul>
         </div>
     </nav>
-    <h1>🤖 AI Personal Finance Assistant</h1>
-    <h1>How can I help you today?</h1>
-    <form method="POST">
-        <input class="input" type="text" name="user_input" placeholder="Ask me anything about your spending!" required>
-        <button class="button" type="submit">Submit</button>
-    </form>
+    <h1>💸 Savings Goals</h1>
 
-    {% if ai_output %}
     <div class="output-box">
-        <div>{{ ai_output|safe }}</div>
+        <div>bello</div>
     </div>
-    {% endif %}
-
-
 </body>
 </html>
