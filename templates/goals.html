@@ -1,52 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <title>$ Goals</title>
 </head>
-<script>
-    function openGoalModal() {
-        document.getElementById("goalModal").style.display = "block";
-    }
-
-    function closeGoalModal() {
-        document.getElementById("goalModal").style.display = "none";
-    }
-
-    window.onclick = function(event) {
-        let modal = document.getElementById("goalModal");
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-    const goalForm = document.getElementById("goalForm");
-    const outputBox = document.querySelector(".output-box");
-
-    goalForm.addEventListener("submit", function(e) {
-        e.preventDefault();
-        let name = this.goalName.value;
-        let amount = this.goalAmount.value;
-
-        let goalBox = document.createElement("div");
-        goalBox.className = "goal-box";
-        goalBox.innerHTML = `
-            <h3>${name}</h3>
-            <p>Target: $${amount}</p>
-        `;
-
-        outputBox.appendChild(goalBox);
-
-        closeGoalModal();
-        this.reset();
-    });
-});
-</script>
-
-
 <body>
     <nav id="desktop-nav">
         <div>
@@ -61,28 +20,145 @@
     <h1>💸 Savings Goals</h1>
     <h2>Create a savings goal by clicking on the + icon on the bottom right!</h2>
 
-    <div class="output-box">
-    </div>
+    <div class="output-box"></div>
 
     <div class="powered-by">
-        Powered by 
+        Powered by
         <a href="https://up.com.au/" target="_blank">
-            <img src="/static/up_logo.png" alt="UP Bank" class="up-logo">
+            <img src="/static/up_logo.png" alt="UP Bank" class="up-logo" />
         </a>
     </div>
 
     <button class="fab" onclick="openGoalModal()">+</button>
 
     <div id="goalModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeGoalModal()">&times;</span>
-        <h2>Create Savings Goal</h2>
-        <form id="goalForm">
-            <input class="modal-input" type="text" placeholder="Goal Name" name="goalName" required>
-            <input class="modal-input" type="number" placeholder="Target $" name="goalAmount" required>
-            <button class="button" type="submit">Create Goal</button>
-        </form>
+        <div class="modal-content">
+            <span class="close" onclick="closeGoalModal()">&times;</span>
+            <h2>Create Savings Goal</h2>
+            <form id="goalForm">
+                <input
+                    class="modal-input"
+                    type="text"
+                    placeholder="Goal Name"
+                    name="goalName"
+                    required
+                />
+                <input
+                    class="modal-input"
+                    type="number"
+                    placeholder="Target $"
+                    name="goalAmount"
+                    required
+                />
+                <input
+                    class="modal-input"
+                    type="number"
+                    placeholder="Saved So Far"
+                    name="savedAmount"
+                    required
+                />
+                <button class="goal-button" type="submit">Create Goal</button>
+            </form>
+        </div>
     </div>
-</div>
+
+    <script>
+        function openGoalModal() {
+            document.getElementById("goalModal").style.display = "flex";
+        }
+
+        function closeGoalModal() {
+            document.getElementById("goalModal").style.display = "none";
+        }
+
+        window.onclick = function (event) {
+            let modal = document.getElementById("goalModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const goalForm = document.getElementById("goalForm");
+    const outputBox = document.querySelector(".output-box");
+
+    loadGoals();
+
+    goalForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        let name = this.goalName.value;
+        let goalAmount = this.goalAmount.value;
+        let savedAmount = this.savedAmount.value;
+
+        createGoalBox(name, goalAmount, savedAmount);
+
+        saveGoal({ name, goalAmount, savedAmount });
+
+        closeGoalModal();
+        this.reset();
+    });
+
+    function saveGoal(goal) {
+        let goals = JSON.parse(localStorage.getItem("goals")) || [];
+        goals.push(goal);
+        localStorage.setItem("goals", JSON.stringify(goals));
+    }
+
+    function loadGoals() {
+        let goals = JSON.parse(localStorage.getItem("goals")) || [];
+        goals.forEach(goal => {
+            createGoalBox(goal.name, goal.goalAmount, goal.savedAmount);
+        });
+    }
+
+    function createGoalBox(name, goalAmount, savedAmount) {
+        let goalBox = document.createElement("div");
+        goalBox.className = "goal-box";
+        goalBox.innerHTML = `
+            <button class="plus-goal" title="Show details">+</button>
+            <button class="delete-goal" title="Delete goal">&times;</button>
+            <h3>${name}</h3>
+            <div class="goal-details" style="display: none;">
+                <p>Target: $${goalAmount}</p>
+                <p>Saved so far: $${savedAmount}</p>
+            </div>
+        `;
+
+        outputBox.appendChild(goalBox);
+
+        goalBox.querySelector(".delete-goal").addEventListener("click", () => {
+            goalBox.remove();
+            removeGoal(name, goalAmount, savedAmount);
+        });
+
+        const plusBtn = goalBox.querySelector(".plus-goal");
+        const details = goalBox.querySelector(".goal-details");
+
+        plusBtn.addEventListener("click", () => {
+            if (details.style.display === "none") {
+                details.style.display = "block";
+                plusBtn.textContent = "–";
+            } else {
+                details.style.display = "none";
+                plusBtn.textContent = "+";
+            }
+        });
+    }
+
+    function removeGoal(name, goalAmount, savedAmount) {
+    let goals = JSON.parse(localStorage.getItem("goals")) || [];
+    let index = goals.findIndex(goal =>
+        goal.name === name &&
+        goal.goalAmount === goalAmount &&
+        goal.savedAmount === savedAmount
+    );
+    if (index !== -1) {
+        goals.splice(index, 1);
+        localStorage.setItem("goals", JSON.stringify(goals));
+    }
+    }
+});
+
+    </script>
 </body>
 </html>
